@@ -1,4 +1,5 @@
-import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { BaseEntity, BeforeInsert, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { bcryptAdapter } from "../../../config/bccrypt.adapter";
 
 export enum Role {
   EMPLOYEE = "EMPLOYEE",
@@ -46,5 +47,10 @@ export class User extends BaseEntity {
       default: Status.AVAILABLE,
     })
     status: Status;
+
+    @BeforeInsert()
+    async hashPassword() {
+      this.password = await bcryptAdapter.encrypt(this.password);
+    }
 
 }
