@@ -4,6 +4,7 @@ import { CustomError } from "../../domain";
 import { UserService } from "../services/user.service";
 import { CreateUserDTO } from "../../domain/dtos/users/create-user.dto";
 import { UpdateUserDTO } from "../../domain/dtos/users/update-user.dto";
+import { protectAccountOwner } from "../../config/validate-owner";
 
 
 export class UserController {
@@ -52,6 +53,11 @@ export class UserController {
 
   updateUser = (req: Request, res: Response) => {
     const {id} = req.params;
+    const sessionUserId = req.body.sessionUser.id;
+
+  if (!protectAccountOwner(id, sessionUserId)) {
+    return res.status(401).json({ message: "You are not the owner of this account" });
+  }
     const [error, updateUserDTO] = UpdateUserDTO.create(req.body);
 
     if (error) return res.status(422).json({ message: error });
@@ -65,12 +71,18 @@ export class UserController {
 
   deleteUser = (req: Request, res: Response) => {
   const {id} = req.params;
+  const sessionUserId = req.body.sessionUser.id;
+
+  if (!protectAccountOwner(id, sessionUserId)) {
+    return res.status(401).json({ message: "You are not the owner of this account" });
+  }
 
   this.userService
     .delete(id)
     .then((data) => res.status(204).json(data))
     .catch((error: any) => this.handleError(error, res));
   };
+  
 
   loginUser = (req: Request, res: Response) => {
     const {email, password} = req.body;
